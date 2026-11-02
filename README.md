@@ -1,144 +1,128 @@
-# TaskFlow Enterprise - RBAC Task Management Workspace
+# TaskFlow RBAC
 
-TaskFlow Enterprise is a production-grade, secure, and modern task management monorepo application. It features strict **Role-Based Access Control (RBAC)** across three system scopes, activity log tracking, custom interactive dashboards, and collaboration components.
+TaskFlow is a work-in-progress task-management application with a Next.js frontend and a NestJS API. The backend includes cookie-based JWT authentication, task and user operations, role/permission guards, and team/project functionality. The current repository contains a working application scaffold and tests, but setup and deployment still need consolidation before it can be described as production-ready.
 
----
+## Current capabilities in the source
 
-## ⚡ Tech Stack
+- Register, log in, log out, inspect the current session, and request/reset a password.
+- Store users and tasks in PostgreSQL through Prisma.
+- Apply JWT guards and permission checks to protected routes.
+- Create and update tasks with restrictions on which fields employees may change.
+- Manage users, teams, projects, user profiles, and additional enterprise records.
+- Provide a Next.js App Router interface for login, registration, dashboards, tasks, employee/team-lead views, and administration.
 
-### Frontend (Client-side)
-- **Framework**: Next.js 16 (App Router)
-- **Language**: TypeScript (Type-safe interfaces)
-- **Styling**: Tailwind CSS v4 (Modern grid systems, transition effects, slate-dark visuals)
-- **API Client**: Axios (Cookie credentials integration)
+**Known limitations:** The frontend currently calls the API at `http://localhost:3001` directly. The backend CORS allowlist and cookie settings are local-development oriented. The seed script creates accounts using fixed development passwords; use it only with a disposable local database and replace/remove those credentials before any shared deployment. No production deployment configuration was found during this review.
 
-### Backend (Server-side)
-- **Framework**: NestJS 11 (Progressive Node.js framework)
-- **Database Client**: Prisma Client (ORM models mapping)
-- **Database**: PostgreSQL (Local containerized or host database)
-- **Authentication**: JWT Strategy via HttpOnly Cookies
-- **Validation**: class-validator, class-transformer
+## Architecture
 
----
-
-## 🔐 Role Permissions Matrix (RBAC)
-
-TaskFlow Enterprise enforces rigid authorization boundaries at both API (controller guards) and UI levels:
-
-| Privilege / Action | Admin | Team Lead | Employee (Staff) |
-| :--- | :---: | :---: | :---: |
-| Access Admin Panel & Logs | ✓ | ✗ | ✗ |
-| Suspend & Activate Users | ✓ | ✗ | ✗ |
-| Manage Teams & Projects | ✓ | ✗ | ✗ |
-| Assign Managers / Leads | ✓ | ✗ | ✗ |
-| Create & Delete Tasks | ✓ | ✓ | ✗ |
-| Update Task Status | ✓ | ✓ | ✓ |
-| Check off Task Subitems | ✓ | ✓ | ✓ |
-| Post Comments / Attachments | ✓ | ✓ | ✓ |
-| View System Analytics | ✓ | ✗ | ✗ |
-| View Team Reports / Workspace | ✓ | ✓ | ✗ |
-| View Personal Workspace | ✓ | ✓ | ✓ |
-
----
-
-## 📁 Repository Folder Structure
-
-```
-taskflow-rbac-project-structure/
-├── apps/
-│   ├── web/                     # Next.js Frontend
-│   │   ├── app/                 # App Router Pages
-│   │   │   ├── admin/           # Admin Dashboard Tab Pages
-│   │   │   ├── dashboard/       # Core Hubs Redirection Router
-│   │   │   ├── employee/        # Staff Backlog Tasks Calendar
-│   │   │   ├── forgot-password/ # Account Password Retrieval
-│   │   │   ├── profile/         # User Details & Security Password Settings
-│   │   │   ├── register/        # Account Signup Validation Form
-│   │   │   ├── reset-password/  # Password Overwrite Token Verification
-│   │   │   ├── tasks/           # Global Backlog Board Table
-│   │   │   ├── teamLead/        # Team Lead Workloads Panel
-│   │   │   ├── layout.tsx       # Root Font Setup
-│   │   │   └── globals.css      # Core Tailwind Styling
-│   │   └── components/          # Reusable Client Elements
-│   │       ├── UI.tsx           # Button, Input, Modal, Select, Badges
-│   │       ├── DashboardLayout.ts # Sidebar & Notifications Dropdown Header
-│   │       └── TaskDrawer.tsx   # Slide-over Checklist, Comments, and Attachments
-│   │
-│   └── backend-temp/            # NestJS Backend
-│       ├── prisma/              # ORM configurations
-│       │   ├── schema.prisma    # PostgreSQL Database Schema
-│       │   ├── seed.ts          # Seed Admin, Lead, Developer accounts
-│       │   └── enterprise-db.json # Extensible Persistent JSON Database
-│       └── src/
-│           ├── app.module.ts    # Main Registry imports
-│           ├── main.ts          # Bootstrapping & Port 3001 binder
-│           ├── auth/            # Auth Controller, JWT Guards & Recovery Tokens
-│           ├── users/           # User CRUD, Profile Edits, Suspension, Manager mapping
-│           ├── tasks/           # Tasks CRUD & Security modification verification
-│           └── enterprise/      # Extra Persistent Store Controllers (Teams/Projects/Comments)
+```mermaid
+flowchart LR
+  Browser[Next.js 16 + React 19] -->|HTTP with credentials| API[NestJS 11 on port 3001]
+  API --> Auth[JWT auth and permission guards]
+  API --> Prisma[Prisma Client]
+  Prisma --> DB[(PostgreSQL)]
+  API --> Extra[Enterprise service records]
 ```
 
----
+The browser application is in `apps/web`. The backend currently used by the source is `apps/backend-temp`; `apps/backend` contains a separate, incomplete/placeholder tree, and the root `package.json` is empty. Install and run each app independently. The enterprise service also stores some extension data in a JSON file rather than Prisma, so not all records share the same persistence mechanism.
 
-## 🛠️ Installation & Setup
+## Repository structure
 
-### Prerequisites
-- Node.js (v20+ recommended)
-- PostgreSQL database instance running locally or on Docker on port `5432`
+```text
+apps/
+  web/                    Next.js App Router UI, components, API helpers
+  backend-temp/           NestJS API, Prisma schema/seed, auth, tasks, users, tests
+  backend/                Incomplete/placeholder backend tree; not the runnable API
+```
 
-### Environment Variables
+## Requirements
 
-#### Backend (`apps/backend-temp/.env`)
+- Node.js 20 or later and npm.
+- PostgreSQL reachable by the backend.
+- Two terminals for the development servers.
+
+## Local setup (PowerShell)
+
+Clone and prepare the API:
+
+```powershell
+git clone https://github.com/Surabin123/taskflow-rbac-project-structure.git
+Set-Location taskflow-rbac-project-structure\apps\backend-temp
+npm ci
+```
+
+Create `apps/backend-temp/.env` with a local database URL and a fresh JWT secret:
+
 ```env
-DATABASE_URL="postgresql://postgres:<PASSWORD>@localhost:5432/taskflow"
-JWT_SECRET="taskflow_secret_2026"
-PORT=3001
+DATABASE_URL="postgresql://postgres:YOUR_LOCAL_PASSWORD@localhost:5432/taskflow?schema=public"
+JWT_SECRET="replace-with-a-long-random-local-secret"
 ```
 
----
+The Prisma schema is `apps/backend-temp/prisma/schema.prisma`. Create the local database first, then generate the client and apply an initial migration:
 
-## 🚀 Running Locally
-
-Follow these steps to initialize and start the workspace:
-
-### 1. Database Migrations & Seeding
-From the backend directory:
-```bash
-cd apps/backend-temp
-npm install
+```powershell
+npx prisma generate
 npx prisma migrate dev --name init
-npm run seed
 ```
 
-### 2. Start the Backend API
-```bash
+To add local demo records, run `npm run seed`. The source uses fixed demo passwords, so never seed a shared or production database. Do not commit `.env`.
+
+Start the API:
+
+```powershell
 npm run start:dev
 ```
-The NestJS API service runs on `http://localhost:3001`.
 
-### 3. Start the Next.js Frontend
-In a new terminal window:
-```bash
-cd apps/web
-npm install
+In a second PowerShell terminal, start the frontend:
+
+```powershell
+Set-Location path\to\taskflow-rbac-project-structure\apps\web
+npm ci
 npm run dev
 ```
-The Next.js client app opens on `http://localhost:3000`.
 
----
+Open `http://localhost:3000`. The backend listens on `http://localhost:3001`; the browser source currently expects these local ports.
 
-## 🧪 Seeding Default Accounts
+## API surface
 
-Upon running the seed script, the database is populated with three default testing roles:
+The following routes are declared by the controllers. Authentication is via an HttpOnly cookie set by the login route; protected routes require a valid JWT. Request DTOs and role/permission checks are implemented in the corresponding controller/service files.
 
-- **Admin Account**: `admin@taskflow.com` (Password: `admin123`)
-- **Team Lead Account**: `teamlead@taskflow.com` (Password: `lead123`)
-- **Employee Account**: `employee@taskflow.com` (Password: `emp123`)
+| Method | Path | Purpose | Access |
+|---|---|---|---|
+| `POST` | `/auth/register` | Register a user | Public |
+| `POST` | `/auth/login` | Authenticate and set the session cookie | Public |
+| `POST` | `/auth/logout` | Clear the session cookie | Public |
+| `GET` | `/auth/me` | Read the current user | Authenticated |
+| `POST` | `/auth/forgot-password` | Request a reset token | Public |
+| `POST` | `/auth/reset-password` | Reset a password with a token | Public |
+| `GET` | `/tasks` | List tasks visible to the current user | Authenticated |
+| `POST` | `/tasks` | Create a task | Permission guarded |
+| `PATCH` | `/tasks/:id` | Update a task; employee edits are restricted to status | Authenticated |
+| `DELETE` | `/tasks/:id` | Delete a task | Permission guarded |
+| `GET`, `POST`, `PATCH`, `DELETE` | `/users` and `/users/:id/...` | User listing, creation, role/profile changes, suspension, manager assignment, deletion | Mixed authenticated/permission guarded routes |
+| `GET`, `POST`, `PATCH`, `DELETE` | `/enterprise/...` | Team, project, comment, attachment and related operations | Authenticated; selected mutations permission guarded |
 
----
+This is a route index, not a complete OpenAPI contract. The repository does not currently provide a generated API specification.
 
-## 🔒 Security Implementations
-- **HttpOnly Cookies**: JWT tokens are securely stored and verified via backend cookie policies.
-- **API Guard Barriers**: In addition to frontend UI hide-outs, all API endpoints verify request roles at controller levels.
-- **Suspension Checks**: Suspended accounts are immediately blocked on incoming authentication and session routes.
-- **Employee Boundary**: Staff accounts are strictly validated to block any field modification aside from task completion state updates.
+## Tests and scripts
+
+Backend scripts are defined in `apps/backend-temp/package.json`:
+
+```powershell
+# From apps/backend-temp
+npm test
+npm run test:e2e
+npm run test:cov
+npm run build
+npm run lint
+```
+
+The backend contains Jest unit and end-to-end test files. The frontend package currently defines `dev`, `build`, `start`, and `lint`; no frontend test script was found. These commands have not been executed in this documentation workspace.
+
+## Deployment and security
+
+No deployment configuration was found in the inspected tree. The hard-coded API origin, local CORS allowlist, cookie `secure: false`, and fixed seed passwords all require changes before a hosted environment. Reset tokens are stored in process memory in the current auth service, so they are not durable across restarts. Do not expose this configuration as a production-ready service without addressing these limitations.
+
+## License
+
+No repository-level `LICENSE` file was found. The backend package is marked private and `UNLICENSED`; do not assume this project has an open-source license.
