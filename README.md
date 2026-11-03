@@ -1,5 +1,11 @@
 # TaskFlow RBAC
 
+![Next.js](https://img.shields.io/badge/Next.js-111111?style=flat-square&logo=nextdotjs&logoColor=white)
+![NestJS](https://img.shields.io/badge/NestJS-E0234E?style=flat-square&logo=nestjs&logoColor=white)
+![TypeScript](https://img.shields.io/badge/TypeScript-3178C6?style=flat-square&logo=typescript&logoColor=white)
+![PostgreSQL](https://img.shields.io/badge/PostgreSQL-4169E1?style=flat-square&logo=postgresql&logoColor=white)
+![Prisma](https://img.shields.io/badge/Prisma-2D3748?style=flat-square&logo=prisma&logoColor=white)
+
 TaskFlow is a work-in-progress task-management application with a Next.js frontend and a NestJS API. The backend includes cookie-based JWT authentication, task and user operations, role/permission guards, and team/project functionality. The current repository contains a working application scaffold and tests, but setup and deployment still need consolidation before it can be described as production-ready.
 
 ## Current capabilities in the source
@@ -51,12 +57,13 @@ Set-Location taskflow-rbac-project-structure\apps\backend-temp
 npm ci
 ```
 
-Create `apps/backend-temp/.env` with a local database URL and a fresh JWT secret:
+Copy the example environment file and set a local database URL and a unique JWT secret of at least 32 characters:
 
-```env
-DATABASE_URL="postgresql://postgres:YOUR_LOCAL_PASSWORD@localhost:5432/taskflow?schema=public"
-JWT_SECRET="replace-with-a-long-random-local-secret"
+```powershell
+Copy-Item .env.example .env
 ```
+
+Edit `.env` with your local values. `JWT_SECRET` is required; the API now fails at startup if it is missing or shorter than 32 characters.
 
 The Prisma schema is `apps/backend-temp/prisma/schema.prisma`. Create the local database first, then generate the client and apply an initial migration:
 
@@ -117,7 +124,7 @@ npm run build
 npm run lint
 ```
 
-The backend contains Jest unit and end-to-end test files. The frontend package currently defines `dev`, `build`, `start`, and `lint`; no frontend test script was found. These commands have not been executed in this documentation workspace.
+The backend contains Jest unit and end-to-end test files. The frontend package currently defines `dev`, `build`, `start`, and `lint`; no frontend test script was found.
 
 ## Deployment and security
 
